@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D2L Grade Calculator</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-5">
+                    <i class="fas fa-graduation-cap fa-3x mb-3"></i>
+                    <h1 class="display-4 mb-3">D2L Grade Calculator</h1>
+                    <p class="lead">Upload your D2L grade PDF to calculate your current average and letter grade</p>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Upload Form -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">
+                            <i class="fas fa-upload me-2"></i>Upload Your Grade PDF
+                        </h5>
+                        
+                        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="mb-4">
+                                <label for="file" class="form-label">Choose PDF File</label>
+                                <input type="file" class="form-control" id="file" name="file" accept=".pdf" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Maximum file size: 16MB. Only PDF files are accepted.
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-calculator me-2"></i>Calculate Grades
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-question-circle me-2"></i>How to Use
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-download me-2"></i>Export from D2L:</h6>
+                                <ol class="small">
+                                    <li>Go to your D2L course</li>
+                                    <li>Navigate to "Grades"</li>
+                                    <li>Click "Export" or "Print"</li>
+                                    <li>Save as PDF</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-check-circle me-2"></i>What We Calculate:</h6>
+                                <ul class="small">
+                                    <li>Weighted average based on assignment weights</li>
+                                    <li>Letter grade (A+ to F scale)</li>
+                                    <li>Breakdown of all grade items</li>
+                                    <li>Total points earned vs. possible</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Notice -->
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <strong>Privacy Notice:</strong> Your uploaded PDF is processed locally and automatically deleted after calculation. No grade data is stored on our servers.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form submission handling
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('file');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a PDF file to upload.');
+                return;
+            }
+            
+            // Check file size (16MB = 16 * 1024 * 1024 bytes)
+            const maxSize = 16 * 1024 * 1024;
+            if (fileInput.files[0].size > maxSize) {
+                e.preventDefault();
+                alert('File size exceeds 16MB limit. Please choose a smaller file.');
+                return;
+            }
+            
+            // Check file type
+            const fileName = fileInput.files[0].name;
+            if (!fileName.toLowerCase().endsWith('.pdf')) {
+                e.preventDefault();
+                alert('Please select a PDF file only.');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            submitBtn.disabled = true;
+        });
+
+        // File input change handler
+        document.getElementById('file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Display file info
+                const fileInfo = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                const existingInfo = document.querySelector('.file-info');
+                if (existingInfo) {
+                    existingInfo.remove();
+                }
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'small text-muted mt-2 file-info';
+                infoDiv.innerHTML = `<i class="fas fa-file-pdf me-1"></i>${fileInfo}`;
+                e.target.parentNode.appendChild(infoDiv);
+            }
+        });
+    </script>
+</body>
+</html>
